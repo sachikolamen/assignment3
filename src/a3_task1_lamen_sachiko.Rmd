@@ -1,0 +1,78 @@
+---
+title: 'PCA: Environmental and Climatic Variables'
+author: "Sachiko Lamen"
+date: "2/14/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(here)
+library(ggfortify)
+library(palmerpenguins)
+library(patchwork)
+library(janitor)
+library(plotly)
+```
+
+```{r}
+# Read in data
+world_env <- read_csv(here("data","world_Env_vars.csv")) 
+
+# Make country column into rownames because PCA only processes numerical values. Remove rows containing NA values (otherwise PCA will not work). For clarity, select only rain and temperature columns that give annual and seasonality measurements.
+
+world_clean <- world_env %>%
+  column_to_rownames(var = "Country") %>%
+  clean_names() %>%
+  mutate(rain_seasonality = rain_seasonailty) %>%
+  select(1:7, rain_mean_annual, rain_seasonality, temp_mean_annual, temp_seasonality, wind, cloudiness) %>%
+  drop_na() 
+```
+
+```{r}
+# Create PCA object
+world_pca <- world_clean %>%
+  scale() %>%
+  prcomp()
+
+### Automated biplot for PC1 and PC2
+autoplot(world_pca, 
+         data = world_clean,
+         loadings = TRUE, # will show arrows
+         loadings.label = TRUE,
+         loadings.colour = 'red',
+         loadings.label.colour = 'blue',
+         loadings.label.size = 3.0,
+         loadings.label.vjust = 0.5) +
+  scale_fill_manual(values = "blue") +
+  theme_minimal()
+
+```
+
+```{r}
+# make vector of std deviations from PCA
+sd_vec <- world_pca$sdev
+
+# need variance for screeplot so convert sd -> variance
+var_vec <- sd_vec^2
+
+pc_names <- colnames(world_pca$rotation)
+
+# make percent of variance explained df
+pct_expl_df <- data.frame(v = var_vec,
+                          pct_v = var_vec/sum(var_vec),
+                          pc = fct_inorder(pc_names)) %>%
+  mutate(pct_lbl = paste(round(pct_v * 100, 1), '%'))
+
+ggplot(pct_expl_df, aes( x = pc, y = v)) +
+  geom_col() + 
+  geom_text(aes(label = pct_lbl), vjust = 0, nudge_y = .005) +
+  labs(x= "Principal component", y = "Variance explained")
+```
+In physical geography and physical geology, aspect (also known as exposure) is the compass direction or azimuth that a terrain surface faces.
+
+Isothermality quantifies how large the day- to-night temperatures oscillate relative to the summer- to-winter (annual) oscillations.
+
+
