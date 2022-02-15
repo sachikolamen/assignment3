@@ -17,6 +17,10 @@ library(janitor)
 library(plotly)
 ```
 
+## *Overview* 
+This code performs a principal components analysis on data acquired through the Google Earth Engine (https://earthengine.google.com) to identify major trends in environmental and climatic variables. 
+Certain variables (specific rain and temperature measurements) were removed from the datset in order to make general interpretation clearer. Only mean annual and seasonality measurements for rain and temperature were retained. After variable selection, any countries that were missing data in these categories were removed in order to run the PCA analysis.
+
 ```{r}
 # Read in data
 world_env <- read_csv(here("data","world_Env_vars.csv")) 
@@ -51,7 +55,12 @@ autoplot(world_pca,
 
 ```
 
+**Figure 1. Biplot of PC1 and PC2** Black points represent environmental and climatic data for each country. Distance between points represents their Euclidian distance. Red lines show general relationships between variables. The angle between arrows is representative of the correlation between variables. A 0 degree angle represents a correlation value of 1, while a 180 degree angle represents a correlation value of -1. A 90 degree angle represents no correlation. Length of the arrows is indicative of the variance in the PC direction. Longer arrows mean that more of the variance is in the PC direction. 
+
+From Figure 1 we can see that there are potentially 2-3 clusters of related countries. Mean rainfall, tree canopy cover, and cloudiness look to be positively correlated. Similarly, cropland cover, elevation, and temperature seasonality variables also appear positively correlated. In contrast, cropland cover and elevation are negatively correlated with mean annual temperature. Wind is also negatively correlated with mean annual rainfall, tree canopy cover, and cloudiness. Rain seasonality and slope are also negatively correlated. It is important to note that the aspect and accessibility to cities variables are not well caputred by PC1 and PC2 as evidenced by their short arrow lengths. Finally, it is also important to note that the combined variance captured by PC1 and PC2 is 50.84%, much less than the 80%.....
 ```{r}
+### Screeplot
+
 # make vector of std deviations from PCA
 sd_vec <- world_pca$sdev
 
@@ -71,6 +80,9 @@ ggplot(pct_expl_df, aes( x = pc, y = v)) +
   geom_text(aes(label = pct_lbl), vjust = 0, nudge_y = .005) +
   labs(x= "Principal component", y = "Variance explained")
 ```
+
+**Figure 2. Screeplot of PC capture of variance** 
+
 In physical geography and physical geology, aspect (also known as exposure) is the compass direction or azimuth that a terrain surface faces.
 
 Isothermality quantifies how large the day- to-night temperatures oscillate relative to the summer- to-winter (annual) oscillations.
