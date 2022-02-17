@@ -1,0 +1,63 @@
+---
+title: "Task 2"
+author: "Sachiko Lamen"
+date: "2/15/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(here)
+library(NbClust)
+library(cluster)
+library(factoextra)
+library(dendextend)
+library(ggdendro)
+```
+
+## **Overview**
+
+```{r}
+# Read in data
+streams <- read_csv(here("data", "sbc_lter_registered_stream_chemistry.csv"))
+
+# Convert -999 values to NA
+streams_clean <- streams %>%
+  mutate(across(c(1:12), na_if, -999))
+```
+
+```{r}
+# Look at data to see if we need to scale
+summary(streams_clean)
+# Yes we need to scale data because some variales have very small ranges (-10-111) while others have  very large ranges (0-586060)
+
+# Select variables with numerical values and scale
+streams_scaled <- streams_clean %>%
+  group_by(site_code) %>%
+  summarize_all(~mean(.x, na.rm = TRUE)) %>%
+  column_to_rownames(var = "site_code") %>%
+  select(-1) %>%
+  scale()
+
+```
+
+### **Dendrogram**
+
+```{r}
+# Calculate distance matrix
+stream_euc_distance <- dist(streams_scaled, method = 'euclidian') 
+
+# Hierarchical clustering using complete method
+stream_hc_complete <- hclust(stream_euc_distance, method = 'complete')
+
+# Plot dendrogram
+
+ggdendrogram(hc_complete, rotate = TRUE) +
+  theme_minimal() +
+  labs(x = "Site",
+       y = "Distance")
+```
+
+
