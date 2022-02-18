@@ -2,10 +2,13 @@
 title: 'PCA: Environmental and Climatic Variables'
 author: "Sachiko Lamen"
 date: "2/14/2022"
-output: html_document
+output:
+  html_document:
+    theme: lumen
+    code_folding: hide
 ---
 
-```{r setup, include=FALSE, message = FALSE, warning = FALSE}
+```{r setup, include= TRUE, message = FALSE, warning = FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 library(tidyverse)
@@ -17,9 +20,17 @@ library(janitor)
 library(plotly)
 ```
 
-## *Overview* 
-This code performs a principal components analysis on data acquired through the Google Earth Engine (https://earthengine.google.com) to identify major trends in environmental and climatic variables. 
-Certain variables (specific rain and temperature measurements) were removed from the datset in order to make general interpretation clearer. Only mean annual and seasonality measurements for rain and temperature were retained. After variable selection, any countries that were missing data in these categories were removed in order to run the PCA analysis.
+### **Overview**
+
+This code performs a principal components analysis on data acquired through the Google Earth Engine (<https://earthengine.google.com>) to identify major trends in environmental and climatic variables. Certain variables (specific rain and temperature measurements) were removed from the datset in order to make general interpretation clearer. Only mean annual and seasonality measurements for rain and temperature were retained. After variable selection, any countries that were missing data in these categories were removed in order to run the PCA analysis.
+
+##### **Citation**
+
+@zander_venter via Kaggle
+
+<https://www.kaggle.com/zanderventer/environmental-variables-for-world-countries>
+
+Accessed: 2/18/2022
 
 ```{r}
 # Read in data
@@ -55,9 +66,10 @@ autoplot(world_pca,
 
 ```
 
-**Figure 1. Biplot of PC1 and PC2** Black points represent environmental and climatic data for each country. Distance between points represents their Euclidian distance. Red lines show general relationships between variables. The angle between arrows is representative of the correlation between variables. A 0 degree angle represents a correlation value of 1, while a 180 degree angle represents a correlation value of -1. A 90 degree angle represents no correlation. Length of the arrows is indicative of the variance in the PC direction. Longer arrows mean that more of the variance is in the PC direction. 
+**Figure 1. Biplot of PC1 and PC2** Black points represent environmental and climatic data for each country. Distance between points represents their Euclidian distance. Red lines show general relationships between variables. The angle between arrows is representative of the correlation between variables. A 0 degree angle represents a correlation value of 1, while a 180 degree angle represents a correlation value of -1. A 90 degree angle represents no correlation. Length of the arrows is indicative of the variance in the PC direction. Longer arrows mean that more of the variance is in the PC direction.
 
-From Figure 1 we can see that there are potentially 2-3 clusters of related countries. Mean rainfall, tree canopy cover, and cloudiness look to be positively correlated. Similarly, cropland cover, elevation, and temperature seasonality variables also appear positively correlated. In contrast, cropland cover and elevation are negatively correlated with mean annual temperature. Wind is also negatively correlated with mean annual rainfall, tree canopy cover, and cloudiness. Rain seasonality and slope are also negatively correlated. It is important to note that the aspect and accessibility to cities variables are not well caputred by PC1 and PC2 as evidenced by their short arrow lengths. Finally, it is also important to note that the combined variance captured by PC1 and PC2 is 50.84%, much less than the 80%.....
+From Figure 1 we can see that there are potentially 2-3 clusters of related countries. Mean rainfall, tree canopy cover, and cloudiness look to be positively correlated. Similarly, cropland cover(%), elevation (m), and temperature seasonality variables also appear positively correlated. In contrast, cropland cover (%) and elevation (m) are negatively correlated with mean annual temperature (deg C). Wind (m/s) is also negatively correlated with mean annual rainfall (mm), tree canopy cover (%), and cloudiness (avg cloudy days/year). Rain seasonality and slope are also negatively correlated. It is important to note that the aspect and accessibility to cities variables are not well caputred by PC1 and PC2 as evidenced by their short arrow lengths. Finally, it is also important to note that the combined variance captured by PC1 and PC2 is 50.84%, much less than the recommended 80% cutoff.
+
 ```{r}
 ### Screeplot
 
@@ -76,15 +88,23 @@ pct_expl_df <- data.frame(v = var_vec,
   mutate(pct_lbl = paste(round(pct_v * 100, 1), '%'))
 
 ggplot(pct_expl_df, aes( x = pc, y = v)) +
-  geom_col() + 
-  geom_text(aes(label = pct_lbl), vjust = 0, nudge_y = .005) +
-  labs(x= "Principal component", y = "Variance explained")
+  geom_col(fill = "lightgreen") + 
+  geom_text(aes(label = pct_lbl), size = 3, vjust = 0, nudge_y = .05) +
+  labs(x= "Principal Component", y = "Variance Captured") +
+  theme_minimal()
 ```
 
-**Figure 2. Screeplot of PC capture of variance** 
+**Figure 2. Screeplot of principal component capture of variance.** Each bar represents the proportion of explained variance captured by each principal component. Exact percentage of variance captured is given above the bars.
 
-In physical geography and physical geology, aspect (also known as exposure) is the compass direction or azimuth that a terrain surface faces.
+The screeplot shows that the first two principal components capture \~ 50.8% of the explained variance. We see that at least 5 dimensions are needed to capture \~80% of the variance.
 
-Isothermality quantifies how large the day- to-night temperatures oscillate relative to the summer- to-winter (annual) oscillations.
+### **Key Takeaways**
 
+-   PC1 and PC2 only capture \~ 50.8% of explained variance between variables
+-   Aspect and accessibility to cities are among variables that are not captured very well by PC1 and PC2
+-   83.5% of explained variance can be captured by the first five principal components
+-   Mean rainfall, tree canopy cover, and cloudiness are positively correlated
+-   Cropland cover, elevation, and temperature seasonality are positively correlated
+-   There may be 2-3 clusters of related countries
 
+**Next Steps:** Further analysis should be carried out using K-means or hierarchical clustering analysis to understand similarities and differences between countries.
