@@ -1,11 +1,14 @@
 ---
-title: "Task 2"
+title: "Hierarchical Clustering Analysis: SB LTER Stream Chemistry"
 author: "Sachiko Lamen"
 date: "2/15/2022"
-output: html_document
+output:
+  html_document:
+    theme: space
+    code_folding: hide
 ---
 
-```{r setup, include=FALSE, message = FALSE, warning = FALSE}
+```{r setup, include= TRUE, message = FALSE, warning = FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 library(tidyverse)
@@ -17,7 +20,13 @@ library(dendextend)
 library(ggdendro)
 ```
 
-## **Overview**
+### **Overview**
+
+This code performs an agglomerative hierarchical clustering analysis on stream chemistry data collected by the SBC LTER since 2000. A dendrograms were created using complete and single linkage to show multivariate clustering for water chemistry by site. Distance between linkages was calculated using the Euclidean method. A tanglegram was used to compare the differences in clustering between complete and single linkage methods
+
+#### **Citation**
+
+Santa Barbara Coastal LTER and J. Melack. 2019. SBC LTER: Land: Stream chemistry in the Santa Barbara Coastal drainage area, ongoing since 2000 ver 16. Environmental Data Initiative. <https://doi.org/10.6073/pasta/67a558a24ceed9a0a5bf5e46ab841174>.
 
 ```{r}
 # Read in data
@@ -28,12 +37,12 @@ streams_clean <- streams %>%
   mutate(across(c(1:12), na_if, -999))
 ```
 
-```{r}
+```{r, include = FALSE}
 # Look at data to see if we need to scale
 summary(streams_clean)
-# Yes we need to scale data because some variales have very small ranges (-10-111) while others have  very large ranges (0-586060)
+# Yes we need to scale data because some variables have very small ranges (-10-111) while others have  very large ranges (0-586060)
 
-# Select variables with numerical values and scale
+# Convert `site_code` column to rownames and select only variables with numerical values to scale
 streams_scaled <- streams_clean %>%
   group_by(site_code) %>%
   summarize_all(~mean(.x, na.rm = TRUE)) %>%
@@ -43,8 +52,6 @@ streams_scaled <- streams_clean %>%
 
 ```
 
-### **Dendrogram**
-
 ```{r}
 # Calculate distance matrix
 stream_euc_distance <- dist(streams_scaled, method = 'euclidian') 
@@ -52,12 +59,29 @@ stream_euc_distance <- dist(streams_scaled, method = 'euclidian')
 # Hierarchical clustering using complete method
 stream_hc_complete <- hclust(stream_euc_distance, method = 'complete')
 
-# Plot dendrogram
+### convert to class dendrogram
+dend_complete <- as.dendrogram(stream_hc_complete)
 
-ggdendrogram(hc_complete, rotate = TRUE) +
-  theme_minimal() +
-  labs(x = "Site",
-       y = "Distance")
+# Plot dendrogram
+dend_complete %>%
+  set("labels_col", "blue") %>%
+  plot(main = "Hierarchical Clustering via Complete Linkage",
+       xlab = "Sites", ylab = "Distance")
+
 ```
 
+**Figure 1.** Complete linkage dendrogram depicting multivariate clustering for water chemistry by site. Intersection of lines represent links between groups. The distance of the lines is proportional to the Euclidean distance between clusters.
 
+### **Conclusions**
+
+It appears that there are 3-4 distinct clusters. Of these we see that:
+
+-   \- Site DV01 diverges early on, likely due to the large difference in ammonium and phosphorous concentration (micro moles/L) compared to all other sites.
+
+-   \- The cluster encapsulating BC02, ON02, and TO02 was likely formed due to similarities in nitrate (micro moles/L) and total particulate nitrogen (micro moles/L) concentrations.
+
+-   \- The above mentioned group could be sliced into two clusters (making 4 instead of 3 clusters) as ON02 and TO02 are more similar in their particulate nitrogen and nitrate concentrations
+
+-   \- 9/13 sites are all in the same cluster
+
+From the above information it is apparent that further investigation into the relationships between these variables is necessary, perhaps through a principal components analysis. Additionally, the largest cluster should be looked examined at greater resoultion to better understand the nuances in variable relationships between these sites.
